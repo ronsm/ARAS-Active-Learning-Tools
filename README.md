@@ -24,8 +24,7 @@ These files should be provided as follows:
 ├── data
 │   ├── annotations.csv
 │   ├── train.csv
-│   ├── validation.csv
-│   └── ...
+│   └── validation.csv
 └── ...
 ```
 
