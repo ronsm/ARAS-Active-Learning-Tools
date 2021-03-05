@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import sys
 import pickle
+import pprint
 from skmultiflow.data.file_stream import FileStream
 from skmultiflow.trees import HoeffdingTreeClassifier
 from skmultiflow.meta import OnlineRUSBoostClassifier 
@@ -11,7 +12,7 @@ from sklearn.metrics import confusion_matrix, classification_report
 
 from log import Log
 
-labels = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
+labels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
 
 class ARASActiveLearningTools(object):
     def __init__(self):
@@ -69,7 +70,7 @@ class ARASActiveLearningTools(object):
 
     # see https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics for available metrics
     def validate(self):
-        self.load_merged()
+        # self.load_merged()
         y_true = self.validation['R1'].tolist()
 
         models_train = [self.model_1_train, self.model_2_train, self.model_3_train]
@@ -77,19 +78,26 @@ class ARASActiveLearningTools(object):
 
         self.logger.log('Predicting with models trained only on the training set...')
 
+        self.stream = FileStream('data/validation.csv')
+        num_samples = self.stream.n_remaining_samples()
+
         for model in models_train:
-            self.stream = FileStream('data/validation.csv')
+            self.stream.restart()
             y_pred_train = self.predict(model, self.stream)
-            cm = classification_report(y_true, y_pred_train, labels=labels)
-            print(cm)
+            cr = classification_report(y_true, y_pred_train, labels=labels)
+            cm = confusion_matrix(y_true, y_pred_train, labels=labels)
+            print(cr)
+            pprint.pprint(cm)
 
         self.logger.log('Predicting with models trained with the annotations added...')
 
         for model in models_with_annotations:
-            self.stream = FileStream('data/validation.csv')
-            y_pred_train = self.predict(model, self.stream)
-            cm = classification_report(y_true, y_pred_train, labels=labels)
-            print(cm)
+            self.stream.restart()
+            y_pred_with_annotations = self.predict(model, self.stream)
+            cr = classification_report(y_true, y_pred_with_annotations, labels=labels)
+            cm = confusion_matrix(y_true, y_pred_with_annotations, labels=labels)
+            print(cr)
+            pprint.pprint(cm)
 
     def predict(self, model, stream):
         y_pred = []
